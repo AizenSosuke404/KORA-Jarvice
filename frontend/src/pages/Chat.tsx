@@ -3,7 +3,7 @@ import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { KoraLogo } from "@/components/kora/KoraLogo";
+import { KoraOrb } from "@/components/kora/KoraOrb";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -36,33 +36,27 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-7rem)] flex-col animate-fade-up">
-      <header className="flex items-center gap-3 border-b pb-3 pt-6">
-        <KoraLogo className="h-8 w-8" />
-        <div>
-          <h1 className="font-display text-lg font-bold leading-none">Kora</h1>
-          <p className="mt-1 text-xs text-muted-foreground">{busy ? "Réfléchit…" : "À l'écoute"}</p>
-        </div>
-      </header>
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col animate-fade-up">
+      <div className="pt-4"><KoraOrb state={busy ? "reflechit" : "ecoute"} size={110} /></div>
       <div className="flex-1 space-y-2 py-4">
         {messages.map((m, i) => (
           <div key={i} className={cn("max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2 text-sm animate-fade-up",
-            m.role === "user" ? "ml-auto bg-primary text-primary-foreground" : "glass")}>
+            m.role === "user" ? "ml-auto bg-gradient-primary text-primary-foreground" : "glass")}>
             {m.content}
             {m.provider && <span className="mt-1 block text-[10px] uppercase tracking-widest text-muted-foreground">via {m.provider}</span>}
           </div>
         ))}
         {messages.length === 1 && (
           <div className="flex flex-wrap gap-2 pt-2">
-            {suggestions.map((s) => <button key={s} onClick={() => send(s)} className="rounded-full border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">{s}</button>)}
+            {suggestions.map((s) => <button key={s} onClick={() => send(s)} className="glass rounded-full px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground">{s}</button>)}
           </div>
         )}
         {busy && <div className="glass w-16 rounded-2xl px-4 py-2 text-center animate-kora-blink">•••</div>}
         <div ref={end} />
       </div>
-      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="sticky bottom-20 flex gap-2 bg-background pb-2 pt-2">
-        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Écris à Kora…" className="h-12 rounded-2xl" />
-        <Button type="submit" size="icon" className="h-12 w-12 rounded-2xl" disabled={busy} aria-label="Envoyer"><Send className="h-4 w-4" /></Button>
+      <form onSubmit={(e) => { e.preventDefault(); send(input); }} className="sticky bottom-28 flex gap-2">
+        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Écris à Kora…" className="glass h-12 rounded-2xl" />
+        <Button type="submit" size="icon" className="h-12 w-12 rounded-2xl bg-gradient-primary text-primary-foreground" disabled={busy} aria-label="Envoyer"><Send className="h-4 w-4" /></Button>
       </form>
     </div>
   );
