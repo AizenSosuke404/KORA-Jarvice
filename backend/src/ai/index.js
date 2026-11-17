@@ -1,4 +1,4 @@
-import { PROVIDERS, normalizeProviderPrefs, providerKey, providerModel } from "./providers.js";
+import { PROVIDERS, normalizeProviderPrefs, providerKey, providerModels } from "./providers.js";
 
 export class AiError extends Error {
   constructor(message, attempts = [], code = "failed") {
@@ -8,13 +8,16 @@ export class AiError extends Error {
   }
 }
 
-async function callProvider(id, { system, messages, fetchImpl, timeoutMs }) {
+/** Erreur « modèle introuvable / retiré » : cela vaut la peine d'essayer un autre modèle du même fournisseur. */
+const isModelError = (e) => e.status === 404 || (e.status === 400 && /model/i.test(e.message));
+
+async function callModel(id, model, { system, messages, fetchImpl, timeoutMs }) {
   const p = PROVIDERS[id];
   const res = await fetchImpl(p.url, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${providerKey(id)}`, ...(p.headers || {}) },
     body: JSON.stringify({
-      model: providerModel(id),
+      model,
       messages: [{ role: "system", content: system }, ...messages],
       temperature: 0.7,
       max_tokens: 2000, // marge pour les modèles qui « réfléchissent » avant de répondre
@@ -32,6 +35,20 @@ async function callProvider(id, { system, messages, fetchImpl, timeoutMs }) {
   const text = typeof raw === "string" ? raw.replace(/<think>[\s\S]*?<\/think>/g, "").trim() : "";
   if (!text) throw new Error("Réponse vide");
   return text;
+}
+
+async function callProvider(id, opts) {
+  let last;
+  for (const model of providerModels(id)) {
+    try {
+      return await callModel(id, model, opts);
+    } catch (e) {
+      last = e;
+      if (!isModelError(e)) throw e;
+      console.warn(`Modèle « ${model} » indisponible chez « ${id} », essai du modèle de secours…`);
+    }
+  }
+  throw last;
 }
 
 /**

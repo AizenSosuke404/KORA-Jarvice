@@ -10,7 +10,8 @@ export const PROVIDERS = {
     url: "https://api.groq.com/openai/v1/chat/completions",
     keyEnv: "GROQ_API_KEY",
     modelEnv: "GROQ_MODEL",
-    defaultModel: "llama-3.3-70b-versatile",
+    defaultModel: "openai/gpt-oss-120b", // llama-3.3-70b-versatile est arrêté chez Groq depuis le 16/08/2026
+    fallbackModels: ["qwen/qwen3.6-27b", "openai/gpt-oss-20b"],
     defaultActif: true,
   },
   gemini: {
@@ -18,7 +19,8 @@ export const PROVIDERS = {
     url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     keyEnv: "GEMINI_API_KEY",
     modelEnv: "GEMINI_MODEL",
-    defaultModel: "gemini-2.5-flash",
+    defaultModel: "gemini-flash-latest", // alias Google : suit toujours le Flash actuel
+    fallbackModels: ["gemini-3-flash-preview", "gemini-3.1-flash-lite"],
     defaultActif: true,
   },
   mistral: {
@@ -50,6 +52,8 @@ export const PROVIDERS = {
 
 export const providerKey = (id) => process.env[PROVIDERS[id].keyEnv] || "";
 export const providerModel = (id) => process.env[PROVIDERS[id].modelEnv] || PROVIDERS[id].defaultModel;
+/** Modèle principal puis modèles de secours : si un modèle est retiré (404), on essaie le suivant. */
+export const providerModels = (id) => [...new Set([providerModel(id), ...(PROVIDERS[id].fallbackModels || [])])];
 
 /**
  * Nettoie la liste enregistrée par l'utilisateur : garde l'ordre choisi, retire les
