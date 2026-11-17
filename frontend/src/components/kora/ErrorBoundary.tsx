@@ -14,7 +14,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   render() {
     if (!this.state.error) return this.props.children;
     return (
-      <div className="glass mt-10 space-y-3 rounded-3xl p-5 text-center">
+      <div className="glass mt-10 space-y-3 rounded-2xl p-4 text-center">
         <p className="font-semibold">Oups, ça n'a pas chargé</p>
         <p className="text-sm text-muted-foreground">{this.state.error.message}</p>
         <Button onClick={() => this.setState({ error: null })}>Réessayer</Button>

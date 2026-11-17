@@ -30,9 +30,13 @@ export default function Memoire() {
   const needle = q.trim().toLowerCase();
   const list = souvenirs.filter((s) => !needle || `${s.contenu} ${s.categorie ?? ""}`.toLowerCase().includes(needle));
 
+  const byCat: Record<string, Souvenir[]> = {};
+  for (const s of list) { const k = s.categorie || "autre"; (byCat[k] = byCat[k] ?? []).push(s); }
+  const groups = Object.entries(byCat);
+
   return (
     <div className="animate-fade-up">
-      <PageHeader title="Mémoire" subtitle={`${souvenirs.length} souvenir${souvenirs.length > 1 ? "s" : ""} · Kora s'en sert pour répondre comme toi`} />
+      <PageHeader title="Mémoire" subtitle={`${souvenirs.length} souvenir${souvenirs.length > 1 ? "s" : ""} · ce que Kora sait de toi`} />
       <div className="mb-3">
         <Input placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
@@ -53,9 +57,12 @@ export default function Memoire() {
           {souvenirs.length === 0 ? "Aucun souvenir pour l'instant. Ajoute ce que Kora doit savoir sur toi." : "Aucun résultat."}
         </p>
       )}
-      <ul className="space-y-2">
-        {list.map((s) => <SouvenirItem key={s.id} s={s} onChange={refresh} />)}
-      </ul>
+      {groups.map(([cat, items]) => (
+        <section key={cat} className="mb-5">
+          <h2 className="mb-2 text-sm font-semibold capitalize text-muted-foreground">{cat}</h2>
+          <ul className="space-y-2">{items.map((s) => <SouvenirItem key={s.id} s={s} onChange={refresh} />)}</ul>
+        </section>
+      ))}
     </div>
   );
 }
@@ -79,7 +86,6 @@ function SouvenirItem({ s, onChange }: { s: Souvenir; onChange: () => void }) {
     <li className="glass flex items-center gap-2 rounded-2xl p-3">
       <div className="flex-1">
         {edit ? <Input value={v} onChange={(e) => setV(e.target.value)} autoFocus /> : <p className="text-sm">{s.contenu}</p>}
-        <span className="text-[10px] uppercase tracking-widest text-primary">{s.categorie}</span>
       </div>
       {edit
         ? <Button size="icon" variant="ghost" onClick={save} aria-label="Enregistrer"><Check className="h-4 w-4" /></Button>

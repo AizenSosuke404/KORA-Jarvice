@@ -5,14 +5,14 @@ import { Pause, Play, Undo2, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { KoraOrb, type KoraState } from "@/components/kora/KoraOrb";
 import { KoraLogo } from "@/components/kora/KoraLogo";
 import { AppBadge } from "@/components/kora/AppBadge";
 import { api } from "@/lib/api";
 import { isPaused, messagesQuery, pauseUntil, reglagesQuery, timeAgo, updateReglages } from "@/lib/kora-data";
 import type { MessageTraite } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-const statutLabel: Record<MessageTraite["statut"], string> = { envoye: "Envoyé", brouillon: "Brouillon à valider", annule: "Annulé", corrige: "Corrigé" };
+const statutLabel: Record<MessageTraite["statut"], string> = { envoye: "Envoyé", brouillon: "À valider", annule: "Annulé", corrige: "Corrigé" };
 
 export default function Accueil() {
   const qc = useQueryClient();
@@ -20,8 +20,8 @@ export default function Accueil() {
   const { data: messages } = useSuspenseQuery(messagesQuery);
   const paused = isPaused(r);
   const on = r.reponses_auto && !paused;
-  const hasDraft = messages.some((m) => m.statut === "brouillon");
-  const state: KoraState = !on ? "off" : hasDraft ? "reflechit" : "ecoute";
+  const drafts = messages.filter((m) => m.statut === "brouillon");
+  const done = messages.filter((m) => m.statut !== "brouillon");
 
   async function save(patch: Record<string, unknown>) {
     try { qc.setQueryData(reglagesQuery.queryKey, await updateReglages(patch)); }
@@ -29,43 +29,66 @@ export default function Accueil() {
   }
 
   return (
-    <div className="animate-fade-up">
-      <header className="flex items-center gap-2 pt-6">
-        <KoraLogo className="h-7 w-7" />
-        <span className="font-display text-lg font-bold">Kora</span>
-        <span className="ml-1 rounded-full border border-primary/40 px-2 text-[10px] uppercase tracking-widest text-primary">bêta</span>
+    <div className="animate-fade-up space-y-6">
+      <header className="flex items-center justify-between pt-6">
+        <div className="flex items-center gap-3">
+          <KoraLogo className="h-9 w-9" />
+          <div>
+            <h1 className="font-display text-xl font-bold leading-none">Kora</h1>
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className={cn("h-1.5 w-1.5 rounded-full", on ? "bg-success" : "bg-muted-foreground")} />
+              {on ? "À l'écoute" : paused ? "En pause" : "En veille"}
+            </p>
+          </div>
+        </div>
       </header>
 
-      <section className="py-4"><KoraOrb state={state} /></section>
-
-      <section className="glass rounded-3xl p-5">
-        <div className="flex items-center justify-between">
+      <section className="glass rounded-2xl p-4">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold">Réponses auto</h2>
+            <h2 className="font-semibold">Réponses auto</h2>
             <p className="text-sm text-muted-foreground">
               {paused ? `En pause jusqu'à ${new Date(r.pause_jusqua!).toLocaleString("fr-FR", { weekday: "short", hour: "2-digit", minute: "2-digit" })}` : on ? "Kora répond pour toi" : "Kora ne répond pas"}
             </p>
           </div>
-          <Switch className="h-9 w-16 [&>span]:h-7 [&>span]:w-7 data-[state=checked]:[&>span]:translate-x-7 data-[state=checked]:bg-primary" checked={r.reponses_auto} onCheckedChange={(v) => save({ reponses_auto: v })} aria-label="Réponses auto" />
+          <Switch checked={r.reponses_auto} onCheckedChange={(v) => save({ reponses_auto: v })} aria-label="Réponses auto" />
         </div>
-        <div className="mt-4 flex gap-2">
+        <div className="mt-3 flex gap-2">
           {paused ? (
-            <Button variant="secondary" className="flex-1" onClick={() => save({ pause_jusqua: null })}><Play className="h-4 w-4" />Reprendre</Button>
+            <Button size="sm" variant="secondary" className="flex-1" onClick={() => save({ pause_jusqua: null })}><Play className="h-4 w-4" />Reprendre</Button>
           ) : (
             <>
-              <Button variant="secondary" className="flex-1" disabled={!r.reponses_auto} onClick={() => save({ pause_jusqua: pauseUntil("1h").toISOString() })}><Pause className="h-4 w-4" />1 h</Button>
-              <Button variant="secondary" className="flex-1" disabled={!r.reponses_auto} onClick={() => save({ pause_jusqua: pauseUntil("demain").toISOString() })}><Pause className="h-4 w-4" />Jusqu'à demain</Button>
+              <Button size="sm" variant="secondary" className="flex-1" disabled={!r.reponses_auto} onClick={() => save({ pause_jusqua: pauseUntil("1h").toISOString() })}><Pause className="h-4 w-4" />Pause 1 h</Button>
+              <Button size="sm" variant="secondary" className="flex-1" disabled={!r.reponses_auto} onClick={() => save({ pause_jusqua: pauseUntil("demain").toISOString() })}><Pause className="h-4 w-4" />Jusqu'à demain</Button>
             </>
           )}
         </div>
       </section>
 
-      <h2 className="mb-3 mt-8 text-lg font-semibold">Messages traités</h2>
-      <ul className="space-y-3">
-        {messages.length === 0 && <li className="text-sm text-muted-foreground">Aucun message pour l'instant.</li>}
-        {messages.map((m) => <MessageCard key={m.id} m={m} />)}
-      </ul>
+      {drafts.length > 0 && (
+        <section>
+          <SectionTitle title="À valider" count={drafts.length} />
+          <ul className="space-y-2">{drafts.map((m) => <MessageCard key={m.id} m={m} />)}</ul>
+        </section>
+      )}
+
+      <section>
+        <SectionTitle title="Répondus récemment" />
+        <ul className="space-y-2">
+          {done.length === 0 && <li className="py-6 text-center text-sm text-muted-foreground">Aucun message pour l'instant.</li>}
+          {done.map((m) => <MessageCard key={m.id} m={m} />)}
+        </ul>
+      </section>
     </div>
+  );
+}
+
+function SectionTitle({ title, count }: { title: string; count?: number }) {
+  return (
+    <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+      {title}
+      {count ? <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] text-primary-foreground">{count}</span> : null}
+    </h2>
   );
 }
 
@@ -85,17 +108,21 @@ function MessageCard({ m }: { m: MessageTraite }) {
 
   const cancelled = m.statut === "annule";
   return (
-    <li className="glass rounded-2xl p-4 animate-fade-up">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold">{m.contact_nom}</span>
-          <AppBadge appli={m.appli} />
+    <li className="glass rounded-2xl p-3.5 animate-fade-up">
+      <div className="flex items-center gap-3">
+        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-accent font-display text-sm font-bold text-accent-foreground">{m.contact_nom[0]}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-semibold">{m.contact_nom}</span>
+            <AppBadge appli={m.appli} />
+          </div>
+          <p className="truncate text-sm text-muted-foreground">{m.recu}</p>
         </div>
-        <span className="text-xs text-muted-foreground">{timeAgo(m.created_at)}</span>
+        <span className="shrink-0 self-start text-xs text-muted-foreground">{timeAgo(m.created_at)}</span>
       </div>
-      <p className="mt-3 rounded-xl bg-muted px-3 py-2 text-sm">{m.recu}</p>
+
       {edit ? (
-        <div className="mt-2 space-y-2">
+        <div className="mt-3 space-y-2">
           <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} />
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="ghost" onClick={() => setEdit(false)}><X className="h-4 w-4" />Fermer</Button>
@@ -103,10 +130,11 @@ function MessageCard({ m }: { m: MessageTraite }) {
           </div>
         </div>
       ) : (
-        <p className={`mt-2 ml-6 rounded-xl bg-accent px-3 py-2 text-sm text-accent-foreground ${cancelled ? "line-through opacity-50" : ""}`}>{m.reponse}</p>
+        <p className={cn("mt-3 rounded-xl bg-accent px-3 py-2 text-sm text-accent-foreground", cancelled && "line-through opacity-50")}>{m.reponse}</p>
       )}
-      <div className="mt-3 flex items-center justify-between">
-        <span className={`text-xs ${m.statut === "brouillon" ? "text-warning" : m.statut === "annule" ? "text-destructive" : "text-success"}`}>● {statutLabel[m.statut]}</span>
+
+      <div className="mt-2 flex items-center justify-between">
+        <span className={cn("text-xs font-medium", m.statut === "brouillon" ? "text-warning" : cancelled ? "text-destructive" : "text-success")}>{statutLabel[m.statut]}</span>
         {!edit && !cancelled && (
           <div className="flex gap-1">
             {m.statut === "brouillon" && <Button size="sm" variant="ghost" onClick={() => update({ statut: "envoye" }, "Brouillon envoyé")}><Check className="h-4 w-4" />Envoyer</Button>}

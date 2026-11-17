@@ -50,19 +50,19 @@ export default function Reglages() {
 
       <NativeSetup />
 
-      <section className="glass rounded-3xl p-5">
-        <h2 className="mb-3 font-semibold">Thème</h2>
+      <section className="glass rounded-2xl p-4">
+        <h2 className="mb-3 font-semibold">Apparence</h2>
         <div className="grid grid-cols-2 gap-2">
           {([{ v: "sombre", I: Moon, l: "Sombre" }, { v: "clair", I: Sun, l: "Clair" }] as const).map(({ v, I, l }) => (
             <button key={v} onClick={() => { applyTheme(v); save({ theme: v }, { theme: v }); }}
-              className={cn("flex items-center justify-center gap-2 rounded-xl border py-3 text-sm font-semibold transition-all", r.theme === v ? "border-primary text-primary shadow-glow" : "text-muted-foreground")}>
+              className={cn("flex items-center justify-center gap-2 rounded-xl border py-2.5 text-sm font-semibold transition-colors", r.theme === v ? "border-primary bg-accent text-primary" : "text-muted-foreground")}>
               <I className="h-4 w-4" />{l}
             </button>
           ))}
         </div>
       </section>
 
-      <section className="glass rounded-3xl p-5">
+      <section className="glass rounded-2xl p-4">
         <h2 className="font-semibold">Fournisseurs IA</h2>
         <p className="mb-3 text-xs text-muted-foreground">Ordre de priorité · bascule automatique si l'un échoue · offres gratuites uniquement</p>
         <ul className="space-y-2">
@@ -81,7 +81,7 @@ export default function Reglages() {
         </ul>
       </section>
 
-      <section className="glass rounded-3xl p-5">
+      <section className="glass rounded-2xl p-4">
         <h2 className="mb-3 flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4 text-primary" />Garde-fous</h2>
         <ul className="space-y-3">
           {gardeFousLabels.map(({ k, label }) => (

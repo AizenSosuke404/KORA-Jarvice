@@ -21,6 +21,7 @@ export default function Contacts() {
   const qc = useQueryClient();
   const { data } = useSuspenseQuery(contactsQuery);
   const [nom, setNom] = useState("");
+  const [q, setQ] = useState("");
   const [appli, setAppli] = useState<Contact["appli"]>("whatsapp");
 
   async function add() {
@@ -46,8 +47,8 @@ export default function Contacts() {
 
   return (
     <div className="animate-fade-up">
-      <PageHeader title="Contacts" subtitle="Auto · Brouillon à valider · Jamais" />
-      <p className="mb-3 text-xs text-muted-foreground">Les personnes qui t'écrivent apparaissent ici toutes seules, en mode Brouillon. Passe en Auto pour que Kora réponde sans te demander.</p>
+      <PageHeader title="Contacts" subtitle={`${data.length} contact${data.length > 1 ? "s" : ""} · Auto, Brouillon ou Jamais`} />
+      <p className="mb-4 text-sm text-muted-foreground">Les personnes qui t'écrivent apparaissent ici toutes seules, en mode Brouillon. Passe en Auto pour que Kora réponde sans te demander.</p>
       <div className="mb-5 flex gap-2">
         <Input placeholder="Ajouter un contact (nom tel qu'il s'affiche)" value={nom} onChange={(e) => setNom(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
         <select value={appli} onChange={(e) => setAppli(e.target.value as Contact["appli"])} className="h-9 rounded-md border border-input bg-transparent px-2 text-sm" aria-label="Application">
@@ -56,9 +57,10 @@ export default function Contacts() {
         </select>
         <Button onClick={add} className="shrink-0">Ajouter</Button>
       </div>
+      {data.length > 4 && <Input className="mb-4" placeholder="Rechercher un contact…" value={q} onChange={(e) => setQ(e.target.value)} />}
       {data.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Aucun contact pour l'instant.</p>}
       <ul className="space-y-3">
-        {data.map((c) => (
+        {data.filter((c) => c.nom.toLowerCase().includes(q.trim().toLowerCase())).map((c) => (
           <li key={c.id} className="glass rounded-2xl p-4">
             <div className="mb-3 flex items-center gap-3">
               <div className="grid h-10 w-10 place-items-center rounded-full bg-accent font-display font-bold text-accent-foreground">{c.nom[0]}</div>

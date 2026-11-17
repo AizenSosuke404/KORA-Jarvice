@@ -33,7 +33,7 @@ export function NativeSetup() {
 
   if (!isNative()) {
     return (
-      <section className="glass rounded-3xl p-5">
+      <section className="glass rounded-2xl p-4">
         <h2 className="font-semibold">Sur ton téléphone</h2>
         <p className="mt-1 text-xs text-muted-foreground">Pour que Kora réponde en arrière-plan (WhatsApp, SMS, bulle flottante), installe l'application Android Kora : GitHub → Releases → « Kora APK ».</p>
       </section>
@@ -52,7 +52,7 @@ export function NativeSetup() {
   }
 
   return (
-    <section className="glass rounded-3xl p-5">
+    <section className="glass rounded-2xl p-4">
       <h2 className="font-semibold">Sur ce téléphone</h2>
       <p className="mb-3 text-xs text-muted-foreground">
         {missing === 0 ? "Toutes les autorisations sont accordées." : `${missing} autorisation${missing > 1 ? "s" : ""} à accorder pour que Kora fonctionne bien.`}

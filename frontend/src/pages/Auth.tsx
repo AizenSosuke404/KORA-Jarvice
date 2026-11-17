@@ -50,7 +50,7 @@ export default function AuthPage() {
           {setup ? "Première activation · crée le compte propriétaire" : "Ton assistant personnel · bêta privée"}
         </p>
       </div>
-      <form onSubmit={submit} className="glass w-full space-y-3 rounded-3xl p-5">
+      <form onSubmit={submit} className="glass w-full space-y-3 rounded-2xl p-4">
         {setup && <Input placeholder="Code d'activation (SETUP_CODE)" value={setupCode} onChange={(e) => setSetupCode(e.target.value)} required autoComplete="off" />}
         {register && <Input placeholder="Code d'invitation" value={code} onChange={(e) => setCode(e.target.value)} required autoComplete="off" />}
         {(setup || register) && <Input placeholder="Ton prénom" value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="given-name" />}
