@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KoraOrb } from "@/components/kora/KoraOrb";
 import { api, setToken } from "@/lib/api";
+import { syncNative } from "@/lib/native";
 
 export default function AuthPage() {
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export default function AuthPage() {
       const body = setup ? { nom, email, password, setupCode } : register ? { nom, email, password, code } : { email, password };
       const { token } = await api<{ token: string }>(path, { method: "POST", body });
       setToken(token);
+      syncNative();
       qc.clear();
       navigate("/accueil", { replace: true });
     } catch (err) {

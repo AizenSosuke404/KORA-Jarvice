@@ -6,6 +6,16 @@ import { HttpError, wrap } from "../middleware.js";
 import { rateLimit } from "../security.js";
 import { getReglages } from "./reglages.js";
 
+/** Message lisible : dit ce qui manque (clé absente) ou quel fournisseur a refusé (sans jamais afficher de clé). */
+export function aiErrorMessage(e) {
+  if (e.code === "no_provider") {
+    return "Aucune clé IA n'est configurée sur le serveur. Ajoute GROQ_API_KEY (ou GEMINI_API_KEY) dans les variables d'environnement de Render, puis redéploie.";
+  }
+  const why = (e.attempts || []).map((a) => `${a.provider} : ${a.status ? `erreur ${a.status}` : "pas de réponse"}`).join(" · ");
+  const hint = (e.attempts || []).some((a) => a.status === 401 || a.status === 403) ? " Une clé semble invalide : recopie-la sans espace." : "";
+  return `Kora n'a pas pu joindre une IA (${why}).${hint}`;
+}
+
 const router = express.Router();
 // Les offres IA gratuites ont des quotas : on protège chaque compte contre les rafales.
 const limiter = rateLimit({ windowMs: 60_000, max: 20, key: (req) => req.user.id });
@@ -29,9 +39,7 @@ router.post("/", limiter, wrap(async (req, res) => {
     const { text, provider } = await generate({ system, messages, prefs: reglages.fournisseurs_ia });
     res.json({ reply: text, provider });
   } catch (e) {
-    if (e instanceof AiError) {
-      throw new HttpError(503, "Kora n'a pas pu joindre une IA pour l'instant. Vérifie les clés et l'ordre des fournisseurs dans les Réglages.");
-    }
+    if (e instanceof AiError) throw new HttpError(503, aiErrorMessage(e));
     throw e;
   }
 }));

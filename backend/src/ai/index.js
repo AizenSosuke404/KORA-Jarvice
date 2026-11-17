@@ -1,9 +1,10 @@
 import { PROVIDERS, normalizeProviderPrefs, providerKey, providerModel } from "./providers.js";
 
 export class AiError extends Error {
-  constructor(message, attempts = []) {
+  constructor(message, attempts = [], code = "failed") {
     super(message);
     this.attempts = attempts;
+    this.code = code;
   }
 }
 
@@ -16,7 +17,7 @@ async function callProvider(id, { system, messages, fetchImpl, timeoutMs }) {
       model: providerModel(id),
       messages: [{ role: "system", content: system }, ...messages],
       temperature: 0.7,
-      max_tokens: 700,
+      max_tokens: 2000, // marge pour les modèles qui « réfléchissent » avant de répondre
     }),
     signal: AbortSignal.timeout(timeoutMs),
   });
@@ -39,7 +40,7 @@ async function callProvider(id, { system, messages, fetchImpl, timeoutMs }) {
  */
 export async function generate({ system, messages, prefs, fetchImpl = fetch, timeoutMs = 25_000 }) {
   const order = normalizeProviderPrefs(prefs).filter((p) => p.actif && p.configure);
-  if (!order.length) throw new AiError("Aucun fournisseur IA actif avec une clé configurée.");
+  if (!order.length) throw new AiError("Aucun fournisseur IA actif avec une clé configurée.", [], "no_provider");
   const attempts = [];
   for (const p of order) {
     try {

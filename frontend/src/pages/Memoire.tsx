@@ -1,7 +1,7 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, Pencil, Check, Search } from "lucide-react";
+import { Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/kora/PageHeader";
@@ -11,30 +11,48 @@ import type { Souvenir } from "@/lib/types";
 
 export default function Memoire() {
   const qc = useQueryClient();
-  const { data } = useSuspenseQuery(souvenirsQuery);
+  // useQuery (et non Suspense) : la page s'affiche toujours, avec un message clair en cas de problème.
+  const { data, isPending, error, refetch } = useQuery(souvenirsQuery);
   const [q, setQ] = useState("");
   const [nouveau, setNouveau] = useState("");
   const refresh = () => qc.invalidateQueries({ queryKey: ["souvenirs"] });
 
   async function add() {
-    if (!nouveau.trim()) return;
-    try { await api("/api/souvenirs", { method: "POST", body: { contenu: nouveau.trim() } }); }
+    const contenu = nouveau.trim();
+    if (!contenu) return;
+    try { await api("/api/souvenirs", { method: "POST", body: { contenu } }); }
     catch (e) { toast.error((e as Error).message); return; }
-    setNouveau(""); refresh();
+    setNouveau("");
+    refresh();
   }
 
-  const list = data.filter((s) => (s.contenu + s.categorie).toLowerCase().includes(q.toLowerCase()));
+  const souvenirs: Souvenir[] = Array.isArray(data) ? data : [];
+  const needle = q.trim().toLowerCase();
+  const list = souvenirs.filter((s) => !needle || `${s.contenu} ${s.categorie ?? ""}`.toLowerCase().includes(needle));
+
   return (
     <div className="animate-fade-up">
-      <PageHeader title="Mémoire" subtitle={`${data.length} souvenirs`} />
-      <div className="relative mb-3">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input className="pl-9" placeholder="Rechercher" value={q} onChange={(e) => setQ(e.target.value)} />
+      <PageHeader title="Mémoire" subtitle={`${souvenirs.length} souvenir${souvenirs.length > 1 ? "s" : ""} · Kora s'en sert pour répondre comme toi`} />
+      <div className="mb-3">
+        <Input placeholder="Rechercher…" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       <div className="mb-5 flex gap-2">
-        <Input placeholder="Nouveau souvenir…" value={nouveau} onChange={(e) => setNouveau(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} />
-        <Button onClick={add} size="icon" aria-label="Ajouter"><Plus className="h-4 w-4" /></Button>
+        <Input placeholder="Nouveau souvenir (ex. : je m'appelle Kali, j'habite Abidjan)" value={nouveau} onChange={(e) => setNouveau(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") add(); }} />
+        <Button onClick={add} className="shrink-0">Ajouter</Button>
       </div>
+
+      {isPending && <p className="py-8 text-center text-sm text-muted-foreground">Chargement…</p>}
+      {error && (
+        <div className="glass space-y-3 rounded-2xl p-4 text-center">
+          <p className="text-sm text-muted-foreground">{(error as Error).message}</p>
+          <Button onClick={() => refetch()}>Réessayer</Button>
+        </div>
+      )}
+      {!isPending && !error && list.length === 0 && (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          {souvenirs.length === 0 ? "Aucun souvenir pour l'instant. Ajoute ce que Kora doit savoir sur toi." : "Aucun résultat."}
+        </p>
+      )}
       <ul className="space-y-2">
         {list.map((s) => <SouvenirItem key={s.id} s={s} onChange={refresh} />)}
       </ul>
@@ -48,12 +66,14 @@ function SouvenirItem({ s, onChange }: { s: Souvenir; onChange: () => void }) {
   async function save() {
     try { await api(`/api/souvenirs/${s.id}`, { method: "PATCH", body: { contenu: v } }); }
     catch (e) { toast.error((e as Error).message); return; }
-    setEdit(false); onChange();
+    setEdit(false);
+    onChange();
   }
   async function del() {
     try { await api(`/api/souvenirs/${s.id}`, { method: "DELETE" }); }
     catch (e) { toast.error((e as Error).message); return; }
-    toast.success("Souvenir oublié"); onChange();
+    toast.success("Souvenir oublié");
+    onChange();
   }
   return (
     <li className="glass flex items-center gap-2 rounded-2xl p-3">
@@ -61,9 +81,10 @@ function SouvenirItem({ s, onChange }: { s: Souvenir; onChange: () => void }) {
         {edit ? <Input value={v} onChange={(e) => setV(e.target.value)} autoFocus /> : <p className="text-sm">{s.contenu}</p>}
         <span className="text-[10px] uppercase tracking-widest text-primary">{s.categorie}</span>
       </div>
-      {edit ? <Button size="icon" variant="ghost" onClick={save} aria-label="Enregistrer"><Check className="h-4 w-4" /></Button>
+      {edit
+        ? <Button size="icon" variant="ghost" onClick={save} aria-label="Enregistrer"><Check className="h-4 w-4" /></Button>
         : <Button size="icon" variant="ghost" onClick={() => setEdit(true)} aria-label="Modifier"><Pencil className="h-4 w-4" /></Button>}
-      <Button size="icon" variant="ghost" onClick={del} aria-label="Supprimer"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+      <Button size="icon" variant="ghost" onClick={del} aria-label="Supprimer"><X className="h-4 w-4 text-destructive" /></Button>
     </li>
   );
 }

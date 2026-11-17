@@ -8,6 +8,9 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
   static getDerivedStateFromError(error: Error): State {
     return { error };
   }
+  componentDidCatch(error: Error) {
+    console.error("Erreur d'affichage Kora :", error);
+  }
   render() {
     if (!this.state.error) return this.props.children;
     return (

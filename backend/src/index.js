@@ -6,6 +6,7 @@ import { auth, errorHandler } from "./middleware.js";
 import authRoutes from "./routes/auth.js";
 import chatRoutes from "./routes/chat.js";
 import contactsRoutes from "./routes/contacts.js";
+import incomingRoutes from "./routes/incoming.js";
 import invitationsRoutes from "./routes/invitations.js";
 import messagesRoutes from "./routes/messages.js";
 import reglagesRoutes from "./routes/reglages.js";
@@ -43,6 +44,7 @@ app.use("/api/messages", auth, messagesRoutes);
 app.use("/api/souvenirs", auth, souvenirsRoutes);
 app.use("/api/invitations", auth, invitationsRoutes);
 app.use("/api/chat", auth, chatRoutes);
+app.use("/api/incoming", auth, incomingRoutes);
 app.use("/api", (req, res) => res.status(404).json({ error: "Route introuvable." }));
 
 // Frontend React compilé (frontend/dist), servi par le même service.

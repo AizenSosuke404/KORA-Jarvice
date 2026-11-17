@@ -3,7 +3,6 @@ import crypto from "node:crypto";
 import { config } from "../config.js";
 import { query, tx } from "../db.js";
 import { HttpError, auth, wrap } from "../middleware.js";
-import { seedDemo } from "../seed.js";
 import { hashPassword, rateLimit, signToken, verifyPassword } from "../security.js";
 
 const router = express.Router();
@@ -56,7 +55,6 @@ router.post("/setup", limiter, wrap(async (req, res) => {
     const { rows } = await c.query("select count(*)::int as n from kora.users");
     if (rows[0].n > 0) throw new HttpError(409, "Le premier compte existe déjà. Connecte-toi.");
     const u = await insertUser(c, { ...data, role: "admin" });
-    await seedDemo(c, u.id);
     return u;
   });
   res.status(201).json({ token: tokenFor(user), user: publicUser(user) });
@@ -86,6 +84,13 @@ router.post("/login", limiter, wrap(async (req, res) => {
   const { rows } = await query("select id, email, nom, role, password_hash from kora.users where email = $1", [email]);
   const ok = rows[0] ? await verifyPassword(password, rows[0].password_hash) : false;
   if (!ok) throw new HttpError(401, "E-mail ou mot de passe incorrect.");
+  res.json({ token: tokenFor(rows[0]), user: publicUser(rows[0]) });
+}));
+
+// Renouvelle le jeton (utilisé par l'app Android pour rester connectée en arrière-plan).
+router.post("/refresh", auth, wrap(async (req, res) => {
+  const { rows } = await query("select id, email, nom, role from kora.users where id = $1", [req.user.id]);
+  if (!rows[0]) throw new HttpError(401, "Compte introuvable.");
   res.json({ token: tokenFor(rows[0]), user: publicUser(rows[0]) });
 }));
 

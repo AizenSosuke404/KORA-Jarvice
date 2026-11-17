@@ -1,0 +1,11 @@
+{
+  "name": "kora-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Application Android de Kora (Capacitor) : coque autour du site Render + fonctions natives",
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  }
+}

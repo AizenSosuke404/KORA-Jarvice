@@ -1,0 +1,13 @@
+{
+  "appId": "com.kora.jarvis",
+  "appName": "Kora",
+  "webDir": "www",
+  "server": {
+    "url": "https://kora-jarvice.onrender.com",
+    "androidScheme": "https",
+    "errorPath": "error.html"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

@@ -7,7 +7,7 @@ import { KoraOrb } from "@/components/kora/KoraOrb";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-type Msg = { role: "user" | "assistant"; content: string; provider?: string };
+type Msg = { role: "user" | "assistant"; content: string; provider?: string; error?: boolean };
 
 export default function Chat() {
   const [messages, setMessages] = useState<Msg[]>([{ role: "assistant", content: "Salut ! Je suis Kora. Que puis-je faire pour toi ?" }]);
@@ -23,12 +23,14 @@ export default function Chat() {
     const next: Msg[] = [...messages, { role: "user", content: text }];
     setMessages(next); setInput(""); setBusy(true);
     try {
-      const history = next.slice(1).map(({ role, content }) => ({ role, content }));
+      const history = next.slice(1).filter((m) => !m.error).map(({ role, content }) => ({ role, content }));
       const { reply, provider } = await api<{ reply: string; provider: string }>("/api/chat", { method: "POST", body: { messages: history } });
       setMessages((m) => [...m, { role: "assistant", content: reply, provider }]);
     } catch (err) {
-      toast.error((err as Error).message);
-      setInput(text);
+      // Le message d'erreur reste affiché dans la conversation (un toast disparaît trop vite).
+      const message = (err as Error).message;
+      toast.error(message);
+      setMessages((m) => [...m, { role: "assistant", content: `⚠️ ${message}`, error: true }]);
     } finally { setBusy(false); }
   }
 

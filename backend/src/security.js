@@ -20,7 +20,7 @@ export async function verifyPassword(password, stored) {
 const b64 = (value) => Buffer.from(value).toString("base64url");
 
 /** JWT HS256 minimal (sans dépendance). */
-export function signToken(payload, secret, ttlSeconds = 60 * 60 * 24 * 30) {
+export function signToken(payload, secret, ttlSeconds = 60 * 60 * 24 * 90) {
   const now = Math.floor(Date.now() / 1000);
   const data = `${b64(JSON.stringify({ alg: "HS256", typ: "JWT" }))}.${b64(JSON.stringify({ ...payload, iat: now, exp: now + ttlSeconds }))}`;
   const sig = crypto.createHmac("sha256", secret).update(data).digest("base64url");

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/kora/PageHeader";
 import { Invitations } from "@/components/kora/Invitations";
+import { NativeSetup } from "@/components/kora/NativeSetup";
+import { clearNative } from "@/lib/native";
 import { setToken } from "@/lib/api";
 import { applyTheme, reglagesQuery, updateReglages } from "@/lib/kora-data";
 import type { Fournisseur, GardeFous } from "@/lib/types";
@@ -45,6 +47,8 @@ export default function Reglages() {
   return (
     <div className="animate-fade-up space-y-6">
       <PageHeader title="Réglages" />
+
+      <NativeSetup />
 
       <section className="glass rounded-3xl p-5">
         <h2 className="mb-3 font-semibold">Thème</h2>
@@ -90,7 +94,7 @@ export default function Reglages() {
       </section>
 
       <Invitations />
-      <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { setToken(null); qc.clear(); navigate("/auth", { replace: true }); }}>
+      <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { clearNative(); setToken(null); qc.clear(); navigate("/auth", { replace: true }); }}>
         <LogOut className="h-4 w-4" />Se déconnecter
       </Button>
     </div>

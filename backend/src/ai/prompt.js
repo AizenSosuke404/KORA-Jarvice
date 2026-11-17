@@ -9,3 +9,13 @@ export function buildSystemPrompt({ garde_fous, souvenirs }) {
     ...(souvenirs || []).map((s) => `- ${s.contenu}`),
   ].filter(Boolean).join("\n");
 }
+
+/** Consigne pour répondre À LA PLACE de l'utilisateur à un message reçu (SMS / WhatsApp). */
+export function buildReplyPrompt({ garde_fous, souvenirs, contact }) {
+  return [
+    buildSystemPrompt({ garde_fous, souvenirs }),
+    `Tu écris la réponse à un message reçu de « ${contact} ». Tu parles AU NOM de l'utilisateur, à la première personne, comme lui.`,
+    "Réponds uniquement par le texte du message à envoyer : pas de guillemets, pas d'explication, pas de signature. 1 à 3 phrases courtes, même langue que le message reçu.",
+    "Si le message demande quelque chose que tu ne peux pas décider à sa place (argent, rendez-vous, information personnelle), réponds poliment que tu reviens vers la personne bientôt.",
+  ].join("\n");
+}

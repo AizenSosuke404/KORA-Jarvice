@@ -10,6 +10,13 @@ router.get("/", wrap(async (req, res) => {
   res.json(rows);
 }));
 
+// Appelé par l'app Android quand un brouillon est envoyé depuis la notification.
+router.post("/:id/envoye", wrap(async (req, res) => {
+  const { rows } = await query("update kora.messages_traites set statut = 'envoye' where id = $1 and user_id = $2 returning *", [uuid(req.params.id), req.user.id]);
+  if (!rows[0]) throw new HttpError(404, "Message introuvable.");
+  res.json(rows[0]);
+}));
+
 router.patch("/:id", wrap(async (req, res) => {
   const b = req.body ?? {};
   const sets = [];
