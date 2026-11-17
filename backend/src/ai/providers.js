@@ -38,6 +38,14 @@ export const PROVIDERS = {
     defaultActif: false,
     headers: { "X-Title": "Kora" },
   },
+  llm7: {
+    nom: "LLM7 (gratuit)",
+    url: "https://api.llm7.io/v1/chat/completions",
+    keyEnv: "LLM7_API_KEY",
+    modelEnv: "LLM7_MODEL",
+    defaultModel: "default", // sélecteurs LLM7 : default · fast · pro (ou un identifiant de /v1/models)
+    defaultActif: false,
+  },
 };
 
 export const providerKey = (id) => process.env[PROVIDERS[id].keyEnv] || "";

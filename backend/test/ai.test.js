@@ -8,7 +8,7 @@ const fail = (status) => async () => ({ ok: false, status, text: async () => "qu
 const base = { system: "s", messages: [{ role: "user", content: "salut" }] };
 
 function withKeys(keys, fn) {
-  const names = ["GROQ_API_KEY", "GEMINI_API_KEY", "MISTRAL_API_KEY", "OPENROUTER_API_KEY"];
+  const names = ["GROQ_API_KEY", "GEMINI_API_KEY", "MISTRAL_API_KEY", "OPENROUTER_API_KEY", "LLM7_API_KEY"];
   const saved = Object.fromEntries(names.map((n) => [n, process.env[n]]));
   for (const n of names) delete process.env[n];
   Object.assign(process.env, keys);
@@ -20,7 +20,7 @@ function withKeys(keys, fn) {
 test("normalisation : ordre gardé, inconnus retirés, nouveaux ajoutés", () =>
   withKeys({ GEMINI_API_KEY: "k" }, () => {
     const list = normalizeProviderPrefs([{ id: "gemini", actif: false }, { id: "inconnu", actif: true }, { id: "gemini", actif: true }]);
-    assert.deepEqual(list.map((p) => p.id), ["gemini", "groq", "mistral", "openrouter"]);
+    assert.deepEqual(list.map((p) => p.id), ["gemini", "groq", "mistral", "openrouter", "llm7"]);
     assert.equal(list[0].actif, false);
     assert.equal(list[0].configure, true);
     assert.equal(list[1].configure, false);
