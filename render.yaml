@@ -1,0 +1,26 @@
+# Un seul service Render (plan gratuit) : le backend Express sert aussi le frontend React compilé.
+services:
+  - type: web
+    name: kora
+    runtime: node
+    plan: free
+    buildCommand: cd frontend && npm install --include=dev && npm run build && cd ../backend && npm install
+    startCommand: cd backend && node src/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL        # URI « Session pooler » de Supabase
+        sync: false
+      - key: SETUP_CODE          # code secret pour créer le 1er compte (propriétaire)
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
